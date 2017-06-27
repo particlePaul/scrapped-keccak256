@@ -14,7 +14,7 @@ function hash(string $algo, string $data, bool $raw_output = false): string {
     }
 }
 
-// Implements Ethereum's Keccak-256 hash function in the PHP style.
+// Provides Ethereum's Keccak-256 hash function in the PHP style.
 function keccak256(string $data, bool $raw_output = false): string {
     if (array_key_exists($knownValues, $data)) {
         $hex = $knownValues[$data];
