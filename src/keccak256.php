@@ -49,6 +49,7 @@ class Keccak256 {
     // https://github.com/emn178/js-sha3/blob/master/src/sha3.js
     // http://www.movable-type.co.uk/scripts/sha3.html
     // https://github.com/gvanas/KeccakCodePackage/blob/master/Standalone/CompactFIPS202-Python/CompactFIPS202.py
+    // https://github.com/0xbb/php-sha3/blob/master/src/Sha3.php
     
     protected static function keccak_sponge_c1088_r512_l256(\SplFixedArray $value): \SplFixedArray {
         $result = new \SplFixedArray(Keccak256::LENGTH_BYTES);
