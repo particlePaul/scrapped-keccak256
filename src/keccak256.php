@@ -28,7 +28,7 @@ class Keccak256 {
         } else {
             $dataBytes = SplFixedArray::fromArray(unpack('C*', $string));
             $resultBytes = keccak256($dataBytes);
-            $resultRawString = pack('C*', $resultBytes)
+            $resultRawString = pack('C*', $resultBytes->toArray());
         }
 
         if ($raw_output) {
@@ -43,7 +43,7 @@ class Keccak256 {
        throw new Exception('not implemented');
     }
 
-    protected static function keccak256_f(SplFixedArray $state) {
+    protected static function keccak256_f(SplFixedArray $state): void {
        throw new Exception('not implemented');
     }
 }
