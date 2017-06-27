@@ -56,7 +56,7 @@ class Keccak256 {
         // State is 1600 bits group into 5x5 lanes of 64 bits each.
         $state = new \SplFixedArray(LANES);
         for ($i = 0; $i < LANES; $i++) {
-            $state[$i] = new Uint64;
+            $state[$i] = new Lane;
         }
 
         // Break input into RATE (512 bit) size blocks.
@@ -81,10 +81,8 @@ class Keccak256 {
 
 // INTERNAL UTILITIES
 
-// A minimal byte-wise Uint64 implementing only the operators required for Keccak,
-// because we can't assume we're running on 64-bit PHP.
-// https://github.com/gvanas/KeccakCodePackage/blob/master/Standalone/CompactFIPS202-Python/CompactFIPS202.py
-class Uint64 {
+// A 64-bit keccak "lane" supporting XOR and ROTL.
+class Lane {
     function __construct() {
         $this->bytes = new \SplFixedArray(8);
     }
@@ -93,28 +91,38 @@ class Uint64 {
         return \SplFixedArray::fromArray($this->bytes->toArray());
     }
 
-    static function fromBytes(\SplFixedArray $bytes): Uint64 {
+    static function fromBytes(\SplFixedArray $bytes): Lane {
         if ($bytes->count() !== 8) {
-            throw new \UnexpectedValueException('Uint64:fromBytes(...) argument must have length 8');
+            throw new \UnexpectedValueException('Lane:fromBytes(...) argument must have length 8');
         }
-        $result = new Uint64;
+        $result = new Lane;
         for ($i = 0; $i < 8; $i++) {
             $result->bytes[$i] = $bytes[$i] & 0xFF;
         }
         return $result;
     }
 
-    function xor(Uint64 $other): Uint64 {
-        $result = new Uint64;
+    // Returns a 2x2 2D array of 64-bit lanes from a flat array of byte values.
+    static function lanesFromBytes(\SplFixedArray $bytes) \SplFixedArray {
+        
+    }
+    
+    // Converts a 2x2 2D array of 64-bit lanes into a flat array of byte values.
+    static function bytesFromLanes(\SplFixedArray $lanes) \SplFixedArray {
+           
+    }
+
+    function xor(Lane $other): Lane {
+        $result = new Lane;
         for ($i = 0; $i < 8; $i++) {
             $result->bytes[$i] = $this->bytes[$i] ^ $other->bytes[$i];
         }
         return $result;
     }
 
-    function rotl(int $distance): Uint64 {
+    function rotl(int $distance): Lane {
         if ($distance < 0) {
-            throw new \UnexpectedValueException('Uint64:rotl(...) argument must not be negative');
+            throw new \UnexpectedValueException('Lane:rotl(...) argument must not be negative');
         }
 
         $bytes = $this->toBytes();
@@ -146,7 +154,7 @@ class Uint64 {
             $remaining = 0;
         }
 
-        return Uint64::fromBytes($bytes);
+        return Lane::fromBytes($bytes);
     }
 }
 
@@ -166,7 +174,7 @@ function hexToBytes(string $data): \SplFixedArray {
 //// SANITY TESTS
 
 function dump($x, $label = "") { echo bytesToHex($x->toBytes()) . " $label\n"; }
-$x = Uint64::fromBytes(hexToBytes('0123456789abcdef'));
+$x = Lane::fromBytes(hexToBytes('0123456789abcdef'));
 dump($x, 'should be the hex alphabet');
 dump($x->xor($x->rotl(1)->rotl(1)->rotl(12)->rotl(3)->rotl(21)->rotl(26)), 'should be zeroed out');
 
