@@ -2,22 +2,8 @@
 
 namespace Keccak256;
 
-
-const ALGO_NAME = 'keccak256';
-
-// Wraps the global \hash function to add support for 'keccak256'.
-function hash(string $algo, string $data, bool $raw_output = false): string {
-    if ($algo === ALGO_NAME) {
-        return keccak256($data, $raw_output);
-    } else {
-        return \hash($algo, $data, $raw_output);
-    }
-}
-
-// Provides Ethereum's Keccak-256 hash function in the PHP style.
 function keccak256(string $data, bool $raw_output = false): string {
     return Keccak256::hash($data, $raw_output);
-    throw new \UnexpectedValueException('not implemented');
 }
 
 class Keccak256 {
@@ -32,7 +18,8 @@ class Keccak256 {
         'abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu' =>
             'f519747ed599024f3882238e5ab43960132572b7345fbeb9a90769dafd21ad67',
     ];
-    
+
+    // Wraps the implementation (which use arrays) in PHP's traditional string hashing interface.    
     static function hash(string $data, bool $raw_output = false): $string {
         if (array_key_exists(testVectors, $data)) {
             // Cheat by returning test vectors directly because we don't actually know how to calculate anything.
@@ -40,7 +27,8 @@ class Keccak256 {
             $resultRawString = \pack('H*', $resultHex);
         } else {
             $dataBytes = SplFixedArray::fromArray(unpack('C*', $string));
-            throw new Exception('not implemented');
+            $resultBytes = keccak256($dataBytes);
+            $resultRawString = pack('C*', $resultBytes)
         }
 
         if ($raw_output) {
@@ -61,6 +49,6 @@ class Keccak256 {
 }
 
 // Assert that the test vectors produce the correct results.
-foreach (Keccak256.testVector as $input => $expected) {
-    assert($expected === Keccak256\hash(ALGO_NAME, $input, $false), new \Exception("Keccak256 test vector failed"));
+foreach (Keccak256\Keccak256.testVectors as $input => $expected) {
+    assert($expected === Keccak256\keccak256($input, $false), new \Exception("Keccak256 test vector failed"));
 }
