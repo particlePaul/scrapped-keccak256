@@ -1,7 +1,7 @@
 {
     "name": "bb/keccak256",
     "type": "library",
-    "description": "Pure PHP implementation of Ethereum's Keccak-256 hash algorithm"m
+    "description": "Pure PHP implementation of Ethereum's Keccak-256 hash algorithm",
     "keywords": [],
     "homepage": "https://github.com/particlePaul/keccak256",
     "license": "MIT",
