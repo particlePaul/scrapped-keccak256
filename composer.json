@@ -1,5 +1,5 @@
 {
-    "name": "bb/keccak256",
+    "name": "pp/keccak256",
     "type": "library",
     "description": "Pure PHP implementation of Ethereum's Keccak-256 hash algorithm",
     "keywords": [],
