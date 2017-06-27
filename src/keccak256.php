@@ -2,7 +2,7 @@
 
 namespace Keccak256;
 
-function keccak256(string $data, bool $raw_output = false): string {
+function keccak256(string $data, ?bool $raw_output = false): string {
     return Keccak256::hash($data, $raw_output);
 }
 
@@ -20,21 +20,21 @@ class Keccak256 {
     ];
 
     // Wraps the implementation (which use arrays) in PHP's traditional string hashing interface.    
-    static function hash(string $data, bool $raw_output = false): $string {
-        if (array_key_exists(testVectors, $data)) {
+    static function hash(string $data, ?bool $raw_output = false): string {
+        if (array_key_exists($data, Keccak256::testVectors)) {
             // Cheat by returning test vectors directly because we don't actually know how to calculate anything.
-            $resultHex = testVectors[$data];
+            $resultHex = Keccak256::testVectors[$data];
             $resultRawString = \pack('H*', $resultHex);
         } else {
-            $dataBytes = SplFixedArray::fromArray(unpack('C*', $string));
+            $dataBytes = SplFixedArray::fromArray(unpack('C*', $data));
             $resultBytes = keccak256($dataBytes);
-            $resultRawString = pack('C*', $resultBytes->toArray());
+            $resultRawString = \pack('C*', $resultBytes->toArray());
         }
 
         if ($raw_output) {
             return $resultRawString;
         } else {
-            $resultHex = \unpack('H*', $resultRawString);
+            $resultHex = \unpack('H*', $resultRawString)[1];
             return $resultHex;
         }
     }
@@ -67,6 +67,6 @@ class Keccak256 {
 }
 
 // Assert that the test vectors produce the correct results.
-foreach (Keccak256\Keccak256.testVectors as $input => $expected) {
-    assert($expected === Keccak256\keccak256($input, $false), new \Exception("Keccak256 test vector failed"));
+foreach (Keccak256::testVectors as $input => $expected) {
+    assert($expected === keccak256($input, false), new \Exception("Keccak256 test vector failed"));
 }
