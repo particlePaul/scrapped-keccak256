@@ -2,6 +2,9 @@
 
 namespace Keccak256;
 
+
+// PUBLIC INTERFACE
+
 function keccak256(string $data, ?bool $raw_output = false): string {
     return Keccak256::hash($data, $raw_output);
 }
@@ -16,25 +19,19 @@ class Keccak256 {
         'abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq' =>
             '45d3b367a6904e6e8d502ee04999a7c27647f91fa845d456525fd352ae3d7371',
         'abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu' =>
-            'f519747ed599024f3882238e5ab43960132572b7345fbeb9a90769dafd21ad67',
+            'f519747ed599024f3882238e5ab43960132572b7345fbeb9a90769dafd21ad67'
     ];
 
     // Wraps the implementation (which use arrays) in PHP's traditional string hashing interface.    
     static function hash(string $data, ?bool $raw_output = false): string {
-        if (array_key_exists($data, Keccak256::testVectors)) {
-            // Cheat by returning test vectors directly because we don't actually know how to calculate anything.
-            $resultHex = Keccak256::testVectors[$data];
-            $resultRawString = \pack('H*', $resultHex);
-        } else {
-            $dataBytes = \SplFixedArray::fromArray(unpack('C*', $data));
-            $resultBytes = Keccak256::keccak256($dataBytes);
-            $resultRawString = \pack('C*', $resultBytes->toArray());
-        }
+        $dataBytes = hexToBytes($data);
+        $resultBytes = Keccak256::keccak256($dataBytes);
 
         if ($raw_output) {
+            $resultRawString = \pack('C*', $resultBytes->toArray());
             return $resultRawString;
         } else {
-            $resultHex = \unpack('H*', $resultRawString)[1];
+            $resultHex = bytesToHex($resultBytes);
             return $resultHex;
         }
     }
@@ -48,13 +45,13 @@ class Keccak256 {
         $result = new \SplFixedArray(256 / 8);
         
         // 5 x 5 lanes of 64 bits
-        $state = [
-            [new Uint64, new Uint64, new Uint64, new Uint64, new Uint64],
-            [new Uint64, new Uint64, new Uint64, new Uint64, new Uint64],
-            [new Uint64, new Uint64, new Uint64, new Uint64, new Uint64],
-            [new Uint64, new Uint64, new Uint64, new Uint64, new Uint64],
-            [new Uint64, new Uint64, new Uint64, new Uint64, new Uint64]
-        ];
+        $state = \SplFixedArray::fromArray([
+            \SplFixedArray::fromArray([new Uint64, new Uint64, new Uint64, new Uint64, new Uint64]),
+            \SplFixedArray::fromArray([new Uint64, new Uint64, new Uint64, new Uint64, new Uint64]),
+            \SplFixedArray::fromArray([new Uint64, new Uint64, new Uint64, new Uint64, new Uint64]),
+            \SplFixedArray::fromArray([new Uint64, new Uint64, new Uint64, new Uint64, new Uint64]),
+            \SplFixedArray::fromArray([new Uint64, new Uint64, new Uint64, new Uint64, new Uint64])
+        ]);
 
         $state[0][0]->rot(2)->xor($state[1][1]);
 
@@ -67,6 +64,9 @@ class Keccak256 {
        throw new \Exception('not implemented');
     }
 }
+
+
+// INTERNAL UTILITIES
 
 // A minimal byte-wise Uint64 implementing only the operators required for Keccak,
 // because we can't assume we're running on 64-bit PHP.
@@ -136,9 +136,31 @@ class Uint64 {
     }
 }
 
-// Assert that the test vectors produce the correct results.
-foreach (Keccak256::testVectors as $input => $expected) {
-    assert($expected === keccak256($input, false), new \Exception("Keccak256 test vector failed"));
+function bytesToHex(\SplFixedArray $array): string {
+    $byteArray = implode(array_map('chr', $array->toArray()));
+    $hex = \unpack('H*', $byteArray)[1];
+    return $hex;
 }
 
-keccak256("hello world");
+function hexToBytes(string $data): \SplFixedArray {
+    $rawString = \pack('H*', $data);
+    $byteArray = array_values(\unpack('C*', $rawString));
+    return \SplFixedArray::fromArray($byteArray);
+}
+
+
+//// SANITY TESTS
+
+function dump($x) { echo bytesToHex($x->toBytes()) . "\n"; }
+$x = Uint64::fromBytes(hexToBytes('0123456789abcdef'));
+dump($x);
+dump($x->rot(1));
+dump($x->rot(8));
+dump($x->xor($x->rot(1)));
+
+echo "\n\n\n";
+
+// Assert that the test vectors produce the correct results.
+foreach (Keccak256::testVectors as $input => $expected) {
+    assert($expected === keccak256($input, false), new \Exception('Keccak256 test vector failed'));
+}
