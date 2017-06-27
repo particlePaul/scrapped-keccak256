@@ -151,12 +151,10 @@ function hexToBytes(string $data): \SplFixedArray {
 
 //// SANITY TESTS
 
-function dump($x) { echo bytesToHex($x->toBytes()) . "\n"; }
+function dump($x, $label = "") { echo bytesToHex($x->toBytes()) . " $label\n"; }
 $x = Uint64::fromBytes(hexToBytes('0123456789abcdef'));
-dump($x);
-dump($x->rot(1));
-dump($x->rot(8));
-dump($x->xor($x->rot(1)));
+dump($x, 'should be the hex alphabet');
+dump($x->xor($x->rot(1)->rot(1)->rot(12)->rot(3)->rot(21)->rot(26)), 'should be zeroed out');
 
 echo "\n\n\n";
 
