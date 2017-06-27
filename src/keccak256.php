@@ -26,8 +26,8 @@ class Keccak256 {
             $resultHex = Keccak256::testVectors[$data];
             $resultRawString = \pack('H*', $resultHex);
         } else {
-            $dataBytes = SplFixedArray::fromArray(unpack('C*', $data));
-            $resultBytes = keccak256($dataBytes);
+            $dataBytes = \SplFixedArray::fromArray(unpack('C*', $data));
+            $resultBytes = Keccak256::keccak256($dataBytes);
             $resultRawString = \pack('C*', $resultBytes->toArray());
         }
 
@@ -44,25 +44,95 @@ class Keccak256 {
     // https://github.com/emn178/js-sha3/blob/master/src/sha3.js
     // http://www.movable-type.co.uk/scripts/sha3.html
     
-    protected static function keccak256(SplFixedArray $value): SplFixedArray {
-        $result = new SplFixedArray(256 / 8);
+    protected static function keccak256(\SplFixedArray $value): \SplFixedArray {
+        $result = new \SplFixedArray(256 / 8);
         
         // 5 x 5 lanes of 64 bits
         $state = [
-            [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],
-            [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],
-            [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],
-            [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],
-            [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]
+            [new Uint64, new Uint64, new Uint64, new Uint64, new Uint64],
+            [new Uint64, new Uint64, new Uint64, new Uint64, new Uint64],
+            [new Uint64, new Uint64, new Uint64, new Uint64, new Uint64],
+            [new Uint64, new Uint64, new Uint64, new Uint64, new Uint64],
+            [new Uint64, new Uint64, new Uint64, new Uint64, new Uint64]
         ];
 
-        throw new Exception('not implemented');
+        $state[0][0]->rot(2)->xor($state[1][1]);
+
+        throw new \Exception('not implemented');
 
         return $result;
     }
 
-    protected static function keccak256_f(SplFixedArray $state): void {
-       throw new Exception('not implemented');
+    protected static function keccak256_f(\SplFixedArray $state): void {
+       throw new \Exception('not implemented');
+    }
+}
+
+// A minimal byte-wise Uint64 implementing only the operators required for Keccak,
+// because we can't assume we're running on 64-bit PHP.
+class Uint64 {
+    function __construct() {
+        $this->bytes = new \SplFixedArray(8);
+    }
+
+    function toBytes(): \SplFixedArray {
+        return \SplFixedArray::fromArray($this->bytes->toArray());
+    }
+
+    static function fromBytes(\SplFixedArray $bytes): Uint64 {
+        if ($bytes->count() !== 8) {
+            throw new \UnexpectedValueException('Uint64:fromBytes(...) argument must have length 8');
+        }
+        $result = new Uint64;
+        for ($i = 0; $i < 8; $i++) {
+            $result->bytes[$i] = $bytes[$i] & 0xFF;
+        }
+        return $result;
+    }
+
+    function xor(Uint64 $other): Uint64 {
+        $result = new Uint64;
+        for ($i = 0; $i < 8; $i++) {
+            $result->bytes[$i] = $this->bytes[$i] ^ $other->bytes[$i];
+        }
+        return $result;
+    }
+
+    function rot(int $distance): Uint64 {
+        if ($distance < 0) {
+            throw new \UnexpectedValueException('Uint64:rot(...) argument must not be negative');
+        }
+
+        $bytes = $this->toBytes();
+        $remaining = $distance;
+
+        while ($remaining >= 8) {
+            $tmp = $bytes[0];
+            $bytes[0] = $bytes[7];
+            $bytes[7] = $bytes[6];
+            $bytes[6] = $bytes[5];
+            $bytes[5] = $bytes[4];
+            $bytes[4] = $bytes[3];
+            $bytes[3] = $bytes[2];
+            $bytes[2] = $bytes[1];
+            $bytes[1] = $tmp;
+            $remaining -= 8;
+        }
+
+        if ($remaining > 0) {
+            $tmp = $bytes[0];
+            $bytes[0] = 0xFF & (($bytes[0] >> $remaining) | ($bytes[7] << (8 - $remaining)));
+            $bytes[7] = 0xFF & (($bytes[7] >> $remaining) | ($bytes[6] << (8 - $remaining)));
+            $bytes[6] = 0xFF & (($bytes[6] >> $remaining) | ($bytes[5] << (8 - $remaining)));
+            $bytes[5] = 0xFF & (($bytes[5] >> $remaining) | ($bytes[4] << (8 - $remaining)));
+            $bytes[4] = 0xFF & (($bytes[4] >> $remaining) | ($bytes[3] << (8 - $remaining)));
+            $bytes[3] = 0xFF & (($bytes[3] >> $remaining) | ($bytes[2] << (8 - $remaining)));
+            $bytes[2] = 0xFF & (($bytes[2] >> $remaining) | ($bytes[1] << (8 - $remaining)));
+            $bytes[1] = 0xFF & (($bytes[1] >> $remaining) | (     $tmp << (8 - $remaining)));
+            $remaining = 0;
+        }
+
+        return Uint64::fromBytes($bytes);
     }
 }
 
@@ -70,3 +140,5 @@ class Keccak256 {
 foreach (Keccak256::testVectors as $input => $expected) {
     assert($expected === keccak256($input, false), new \Exception("Keccak256 test vector failed"));
 }
+
+keccak256("hello world");
