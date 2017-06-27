@@ -39,8 +39,26 @@ class Keccak256 {
         }
     }
     
+    // The meat of the thing.
+    // http://keccak.noekeon.org/specs_summary.html
+    // https://github.com/emn178/js-sha3/blob/master/src/sha3.js
+    // http://www.movable-type.co.uk/scripts/sha3.html
+    
     protected static function keccak256(SplFixedArray $value): SplFixedArray {
-       throw new Exception('not implemented');
+        $result = new SplFixedArray(256 / 8);
+        
+        // 5 x 5 lanes of 64 bits
+        $state = [
+            [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],
+            [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],
+            [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],
+            [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],
+            [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]
+        ];
+
+        throw new Exception('not implemented');
+
+        return $result;
     }
 
     protected static function keccak256_f(SplFixedArray $state): void {
