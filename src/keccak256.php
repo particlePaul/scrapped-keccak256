@@ -13,9 +13,9 @@ class Keccak256 {
     // Keccak algorithim parameters
     const CAPACITY_BITS = 1088;
     const RATE_BITS = 512;
-    const RATE_BYTES = RATE_BITS / 8;
+    const RATE_BYTES = Keccak256::RATE_BITS / 8;
     const LENGTH_BITS = 256;
-    const LENGTH_BYTES = LENGTH_BITS / 8;
+    const LENGTH_BYTES = Keccak256::LENGTH_BITS / 8;
     const LANES = 5 * 5;
 
     // Some known input-output pairs.
@@ -32,8 +32,9 @@ class Keccak256 {
 
     // Wraps the implementation (which use arrays) in PHP's traditional string hashing interface.    
     static function hash(string $data, ?bool $raw_output = false): string {
+        // TODO: this needs string to byes, not hex!
         $dataBytes = hexToBytes($data);
-        $resultBytes = Keccak256::keccak_sponge_r1088_f128_d256($dataBytes);
+        $resultBytes = Keccak256::keccak_sponge_c1088_r512_l256($dataBytes);
 
         if ($raw_output) {
             $resultRawString = \pack('C*', $resultBytes->toArray());
@@ -53,6 +54,7 @@ class Keccak256 {
     
     protected static function keccak_sponge_c1088_r512_l256(\SplFixedArray $value): \SplFixedArray {
         $result = new \SplFixedArray(Keccak256::LENGTH_BYTES);
+        return $result;
         
         // State is 1600 bits group into 5x5 lanes of 64 bits each.
         $state = new \SplFixedArray(LANES);
@@ -104,12 +106,12 @@ class Lane {
     }
 
     // Returns a 2x2 2D array of 64-bit lanes from a flat array of byte values.
-    static function lanesFromBytes(\SplFixedArray $bytes) \SplFixedArray {
+    static function lanesFromBytes(\SplFixedArray $bytes): \SplFixedArray {
         
     }
     
     // Converts a 2x2 2D array of 64-bit lanes into a flat array of byte values.
-    static function bytesFromLanes(\SplFixedArray $lanes) \SplFixedArray {
+    static function bytesFromLanes(\SplFixedArray $lanes): \SplFixedArray {
            
     }
 
@@ -183,6 +185,9 @@ echo "\n\n\n";
 
 // Assert that the test vectors produce the correct results.
 foreach (Keccak256::testVectors as $input => $expected) {
-    echo "Testing $input...\n";
-    assert($expected === keccak256($input, false), new \Exception('Keccak256 test vector failed'));
+    echo "testing Keccak256\keccak256(" . json_encode($input) . ")\n";
+    $actual = keccak256($input, false);
+    if ($expected !== $actual) {
+        echo("ERROR: Got $actual expecting $expected.");
+    }
 }
